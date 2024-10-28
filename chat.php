@@ -183,8 +183,11 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                                                             <img src="images/<?php echo $userId ?>.jpg" class="rounded-circle" style="width: 80px; height: 80px;border-radius: 50%; object-fit: cover;">
                                                             <div><?php echo $r["first_name"] . " " . $r["last_name"]; ?>
                                                             <?php if ($r["status"] == 1) { ?>
-                                                                <span style="color: green; font-weight: bold; margin-left: 10px;">●</span>
+                                                                <span style="color: green; font-weight: bold; margin-left: 10px;">● Active</span>
+                                                            <?php } else { ?>
+                                                                <span style="color: red; font-weight: bold; margin-left: 10px;">● Inactive</span>
                                                             <?php } ?>
+
                                                          </div>
                                                         </td>
                                                         

@@ -24,10 +24,16 @@ if (empty($_POST["email"]) || empty($_POST["pass"])) {
     if (mysqli_num_rows($rs) > 0) {
         $r = mysqli_fetch_array($rs);
         // Check if the password matches
-        if (password_verify($pass, $r["password"])) { // Changed from md5 to password_verify
+        if (password_verify($pass, $r["password"])) {
             // Set session and cookie for login
             setcookie("login", $email, time() + 3600);
-            $_SESSION["session"] = $email;
+            $_SESSION["session"] = $r['userId'];
+
+            // Update login_time and last_activity on successful login
+            $userId = $r['userId'];
+            $updateQuery = "UPDATE `user` SET `login_time` = NOW(), `last_activity` = NOW() WHERE `userId` = '$userId'";
+            mysqli_query($conn, $updateQuery);
+
             // Redirect to Dashboard
             header("Location: Dashboard.php");
             exit();

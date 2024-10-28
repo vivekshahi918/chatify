@@ -1,15 +1,32 @@
 <?php
 session_start();
-if(isset($_COOKIE["login"]) && isset($_SESSION["session"])){
+if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     $email = $_COOKIE["login"];
     $session = $_SESSION["session"];
     $conn = mysqli_connect("localhost", "root", "", "chat_db");
-    $rs = mysqli_query($conn, "SELECT * FROM user WHERE email ='$email'");
-    if($r = mysqli_fetch_array($rs)){
-        ?>
-        <?php include_once "header.php"; ?>
-        <style>
-            body {
+
+    if (!$conn) {
+        die("Connection failed: " . mysqli_connect_error());
+    }
+
+    // Fetch logged-in user info
+    $rs = mysqli_query($conn, "SELECT * FROM user WHERE email = '$email'");
+    if ($rs && mysqli_num_rows($rs) > 0) {
+        $r = mysqli_fetch_assoc($rs); // Assign logged-in user data to $r
+    } else {
+        echo "User data not found.";
+        header("location: login.php"); // Redirect if no user data is found
+        exit();
+    }
+} else {
+    header("location: login.php");
+    exit();
+}
+?>
+
+<?php include_once "header.php"; ?>
+<style>
+     body {
                 background-color: #f0f8ff; /* Light Alice Blue */
                 font-family: Arial, sans-serif;
             }
@@ -89,96 +106,114 @@ if(isset($_COOKIE["login"]) && isset($_SESSION["session"])){
                 font-weight: bold;
                 color: #333;
             }
-        </style>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
-            $(document).ready(function(){
-                $("input#Search").keyup(function(){
-                    var searchValue = $(this).val();
-                    var email = "<?php echo $email; ?>";
-                    if(searchValue === ""){
-                        $.post("new_dashboard.php", {email: email}, function(data){
-                            $("#record").html(data);
-                        });
-                    } else {
-                        $.post("search.php", {ch: searchValue}, function(data){
-                            $("#record").html(data);
-                        });
-                    }
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $("input#Search").keyup(function(){
+            var searchValue = $(this).val();
+            var email = "<?php echo $email; ?>";
+            if(searchValue === ""){
+                $.post("new_dashboard.php", {email: email}, function(data){
+                    $("#record").html(data);
                 });
+            } else {
+                $.post("search.php", {ch: searchValue}, function(data){
+                    $("#record").html(data);
+                });
+            }
+        });
 
-                $(document).on("click", ".chat-link", function() {
-                    window.location.href = $(this).data("href");
-                });
-            });
-        </script>
-        <body>
-        <div class="background-video">
-        <video autoplay muted loop id="video-background">
-            <source src="videos/background1.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
-            <div class="container-fluid">
-                <div class="row" style="margin-top:130px;">
-                    <div class="col-sm-4"></div>
-                    <div class="col-sm-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <td>
-                                                <img src="images/<?php echo $r["userId"]; ?>.jpg" class="rounded-circle" style="width:80px;height:80px;">
-                                            </td>
-                                            <td>
-                                                <?php echo $r["first_name"] . " " . $r["last_name"]; ?>
-                                                <?php if ($r["status"] == 1) { ?>
-                                                    <br><strong>Active Now</strong>
-                                                <?php } ?>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-primary">
-                                                    <a href="logout.php" style="text-decoration:none;color:white">Logout</a>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <hr>
-                                <div class="row">
-                                    <span class="text">Select a user to start chat</span>
-                                    <input type="text" id="Search" placeholder="Search here.......">
-                                </div>
-                                <div class="row" id="record">
-                                    <?php
-                                    $rp = mysqli_query($conn, "SELECT * FROM user WHERE email<>'$email'");
-                                    echo "<table class='table table-borderless'>";
-                                    while ($rn = mysqli_fetch_array($rp)) {
-                                        ?>
-                                        <tr>
-                                            <td>
-                                                <a href="#" class="chat-link" data-href="chat.php?userid=<?php echo $rn["userId"]; ?>">
-                                                    <img src="images/<?php echo $rn["userId"]; ?>.jpg" class="rounded-circle" style="width:60px;height:60px;">
-                                                    <span><?php echo $rn["first_name"] . " " . $rn["last_name"]; ?></span>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php
-                                    }
-                                    echo "</table>";
-                                    ?>
-                                </div>
-                            </div>
-                        </div>
+        $(document).on("click", ".chat-link", function() {
+            window.location.href = $(this).data("href");
+        });
+    });
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+
+<body>
+<div class="background-video">
+    <video autoplay muted loop id="video-background">
+        <source src="videos/background1.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+
+<div class="container-fluid">
+    <div class="row" style="margin-top:130px;">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td>
+                                    <img src="images/<?php echo $r["userId"]; ?>.jpg" class="rounded-circle" style="width:80px;height:80px;">
+                                </td>
+                                <td>
+                                    <?php echo $r["first_name"] . " " . $r["last_name"]; ?>
+                                    <?php if ($r["last_activity"] !== $r["logout_time"]): ?>
+                                        <br><strong>Active Now</strong>
+                                    <?php else: ?>
+                                        <br><strong>Inactive</strong>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary">
+                                        <a href="logout.php" style="text-decoration:none;color:white">Logout</a>
+                                    </button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <span class="text">Select a user to start chat</span>
+                        <input type="text" id="Search" placeholder="Search here.......">
+                    </div>
+                    <div class="row" id="record">
+                        <?php
+                        // Fetch other users' info with their unread messages
+                        $rp = mysqli_query($conn, "SELECT u.*, COALESCE(n.unread_messages, 0) AS unread_messages 
+                                                        FROM user u
+                                                        LEFT JOIN notifications n ON u.userId = n.userId
+                                                        WHERE u.email <> '$email'
+                                                        ORDER BY u.status DESC, u.first_name ASC");
+
+
+                        echo "<table class='table table-borderless'>";
+                        while ($rn = mysqli_fetch_array($rp)) { // $rn now refers to each other user
+                            ?>
+                            <tr>
+                                <td>
+                                    <a href="#" class="chat-link" data-href="chat.php?userid=<?php echo $rn["userId"]; ?>">
+                                        <img src="images/<?php echo $rn["userId"]; ?>.jpg" class="rounded-circle" style="width:60px;height:60px;">
+                                        <span><?php echo $rn["first_name"] . " " . $rn["last_name"]; ?></span>
+                                        <?php if ($rn['unread_messages'] > 0): ?>
+                                            <span class="badge bg-primary"><?php echo $rn['unread_messages']; ?> New</span>
+                                        <?php endif; ?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <?php if ($rn["last_activity"] !== $rn["logout_time"]): ?>
+                                        <span style="color: green;">● Active</span>
+                                    <?php else: ?>
+                                        <span style="color: red;">● Inactive</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+                        echo "</table>";
+                        ?>
                     </div>
                 </div>
             </div>
-        </body>
-        </html>
-        <?php
-    }
-} else {
-    header("location:login.php");
-}
-?>
+        </div>
+    </div>
+</div>
+</body>
+</html>
