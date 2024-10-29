@@ -25,6 +25,7 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
 ?>
 
 <?php include_once "header.php"; ?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
      body {
                 background-color: #f0f8ff; /* Light Alice Blue */
@@ -34,31 +35,92 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                 border: 5px solid #4caf50; /* Green */
                 border-radius: 2px;
             }
-            .background-video {
+            .background-image {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
                 overflow: hidden;
-                z-index: -1; /* Ensure the video is behind the content */
+                z-index: -1; /* Ensure the background is behind the content */
             }
 
-            #video-background {
+            #image-background {
                 width: 100%;
                 height: 100%;
-                object-fit: cover; /* Ensure the video covers the entire background */
+                object-fit: cover; /* Ensure the image covers the entire background */
+            }
+            .notification-icon {
+                position: relative;
+                font-size: 24px;
+                color: #333; /* Icon color */
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .notification-icon:hover {
+                color: #02cefc; /* Change color on hover */
+            }
+
+            .notification-badge {
+                position: absolute;
+                top: -3px;
+                right: 1px;
+                background-color: #ff0000; /* Red badge color */
+                color: white;
+                border-radius: 50%;
+                padding: 3px 7px;
+                font-size: 10px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Black transparent overlay, initially hidden */
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.6); /* Black with 50% transparency */
+                opacity: 0;
+                transition: opacity 0.5s ease;
+                z-index: -1; /* Initially behind the content */
             }
 
             .card {
+                max-width: 100%;          /* Allows card to be full-width within the container */
+                width: 100%; 
+                height:95%;              /* Keeps the card within the column width */
                 border-radius: 10px;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
                 transition: box-shadow 0.3s ease-in-out;
+                margin: 0 auto;            /* Centers the card within the column */
             }
+
+            .container-fluid {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
             .card:hover {
                 box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+                z-index: 0;
+                transition: background 0.5s, transform 0.5s;
+                box-shadow: 
+                            1px 1px 20px #02cefcf7,
+                            1px 1px 60px #ff6b6bf7,
+                            1px 1px 80px #fffb96f7,
+                            1px 1px 100px #87ceebf7;
+                }
+
+            /* Show overlay when card is hovered */
+            .card:hover ~ .overlay {
+                opacity: 1;
             }
-            
+
             .btn-primary {
                 background-color: #007bff; /* Bootstrap Primary Color */
                 border: none;
@@ -134,17 +196,13 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
 </script>
 
 <body>
-<div class="background-video">
-    <video autoplay muted loop id="video-background">
-        <source src="videos/background1.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+<div class="background-image">
+    <img src="image/logo.png" id="image-background">
 </div>
 
 <div class="container-fluid">
-    <div class="row" style="margin-top:130px;">
-        <div class="col-sm-4"></div>
-        <div class="col-sm-4">
+<div class="row justify-content-center" style="margin-top: 90px;">
+    <div class="col-12 col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
@@ -165,6 +223,12 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                                     <button class="btn btn-primary">
                                         <a href="logout.php" style="text-decoration:none;color:white">Logout</a>
                                     </button>
+                                </td>
+                                <td>
+                                    <div class="notification-icon">
+                                        <i class="fas fa-bell"></i>
+                                        <span class="notification-badge">3</span> <!-- Display number of notifications -->
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -204,6 +268,12 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                                         <span style="color: red;">● Inactive</span>
                                     <?php endif; ?>
                                 </td>
+                                <td>
+                                <div class="notification-icon">
+                                        <i class="fas fa-bell"></i>
+                                        <span class="notification-badge">3</span> <!-- Display number of notifications -->
+                                    </div>
+                                </td>
                             </tr>
                             <?php
                         }
@@ -212,6 +282,7 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                     </div>
                 </div>
             </div>
+            <div class="overlay"></div>
         </div>
     </div>
 </div>
