@@ -106,8 +106,8 @@ if (isset($_SESSION["session"])) {
                             }
                             .user-info img {
                                 border-radius: 50%;
-                                width: 80px;
-                                height: 80px;
+                                width: 90px;
+                                height: 90px;
                                 object-fit: cover;
                             }
                             .status-indicator {
@@ -209,11 +209,12 @@ if (isset($_SESSION["session"])) {
                                         <hr>
                                         <div class="chat-box" id="chat-box"></div>
                                         <div class="message-input">
-                                            <input type="text" id="message" placeholder="Type a message here..." autocomplete="off">
-                                            <button class="send-btn">
-                                                <i class="fa-brands fa-telegram"></i>
-                                            </button>
-                                        </div>
+                                    <input type="text" id="message" placeholder="Type a message here..." autocomplete="off">
+                                    <button class="send-btn">
+                                        <i class="fa-brands fa-telegram"></i>
+                                    </button>
+                                    <div id="flash-message" style="display: none; color: red; font-size: 12px; margin-top: 5px;">Please enter a message</div>
+                                </div>
                                     </div>
                                     <div class="overlay"></div>
                                 </div>
@@ -273,6 +274,34 @@ if (isset($_SESSION["session"])) {
                             setInterval(function() {
                                 location.reload();
                             }, 300000);
+                        </script>
+                        <script>
+                            const messageInput = document.getElementById("message");
+                            const sendBtn = document.querySelector(".send-btn");
+                            const flashMessage = document.getElementById("flash-message");
+
+                            function sendMessage() {
+                                const messageText = messageInput.value.trim();
+                                if (messageText === "") {
+                                    flashMessage.style.display = "block";
+                                    setTimeout(() => {
+                                        flashMessage.style.display = "none";
+                                    }, 1500); // Flash message for 1.5 seconds
+                                    return false; // Prevent sending if message is empty
+                                }
+                                // Code to send the message goes here
+                                console.log("Message sent:", messageText);
+                                messageInput.value = ""; // Clear input after sending
+                            }
+
+                            sendBtn.addEventListener("click", sendMessage);
+
+                            messageInput.addEventListener("keydown", function (event) {
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    sendMessage();
+                                }
+                            });
                         </script>
                     </body>
                 </html>
