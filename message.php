@@ -67,11 +67,15 @@ function handleTextMessage($conn, $sender_email, $receiver_userid, $msg) {
 
     $dt = date("Y-m-d H:i:s");
 
-    $stmt = mysqli_prepare($conn, "INSERT INTO message (sn, userId, sender_email, sender_userid, receiver_email, receiver_userid, message, chat_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    // Insert the message into the message table with is_read and read_status set to 0
+    $stmt = mysqli_prepare($conn, "INSERT INTO message (sn, userId, sender_email, sender_userid, receiver_email, receiver_userid, message, chat_time, is_read, read_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)");
     mysqli_stmt_bind_param($stmt, "isssssss", $sn, $new_user_id, $sender_email, $sender_userid, $receiver_email, $receiver_userid, $msg, $dt);
 
     if (mysqli_stmt_execute($stmt)) {
         echo "success";
+
+        // Update the notifications table for unread messages
+        updateNotification($conn, $sender_userid, $receiver_userid);
     } else {
         echo "Error: " . mysqli_error($conn);
     }
@@ -125,11 +129,15 @@ function handleFileUpload($conn, $sender_email, $file, $receiver_userid) {
 
             $dt = date("Y-m-d H:i:s");
 
-            $stmt = mysqli_prepare($conn, "INSERT INTO message (sn, userId, sender_email, sender_userid, receiver_email, receiver_userid, file_path, chat_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            // Insert file message with is_read and read_status set to 0
+            $stmt = mysqli_prepare($conn, "INSERT INTO message (sn, userId, sender_email, sender_userid, receiver_email, receiver_userid, file_path, chat_time, is_read, read_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)");
             mysqli_stmt_bind_param($stmt, "isssssss", $sn, $new_user_id, $sender_email, $sender_userid, $receiver_email, $receiver_userid, $fileDestination, $dt);
 
             if (mysqli_stmt_execute($stmt)) {
                 echo "success";
+
+                // Update the notifications table for unread messages
+                updateNotification($conn, $sender_userid, $receiver_userid);
             } else {
                 echo "Error: " . mysqli_error($conn);
             }
@@ -141,5 +149,17 @@ function handleFileUpload($conn, $sender_email, $file, $receiver_userid) {
     } else {
         echo "Invalid file type or file too large.";
     }
+}
+
+// Function to update notifications for unread messages
+function updateNotification($conn, $sender_userid, $receiver_userid) {
+    $query = "INSERT INTO notifications (sender_userid, receiver_userid, unread_messages)
+              VALUES (?, ?, 1)
+              ON DUPLICATE KEY UPDATE unread_messages = unread_messages + 1";
+
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $sender_userid, $receiver_userid);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 }
 ?>

@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 $conn = mysqli_connect("localhost", "root", "", "chat_db");
 
@@ -11,29 +11,21 @@ $session_timeout = 5 * 60; // 15 minutes
 
 // Check if user is logged in
 if (isset($_SESSION["session"])) {
-    // Check if the session has timed out
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $session_timeout)) {
-        // Session has timed out
         $userId = $_SESSION["session"];
-
-        // Update logout_time in the database
         $updateQuery = "UPDATE `user` SET `logout_time` = NOW() WHERE `userId` = '$userId'";
         mysqli_query($conn, $updateQuery);
 
-        // Clear the session and cookie
         setcookie("login", "", time() - 1);
         session_unset();
         session_destroy();
 
-        // Redirect to login page
         header("location: index.php");
         exit();
     }
 
-    // Update last activity timestamp
-    $_SESSION['last_activity'] = time(); // Update last activity time
+    $_SESSION['last_activity'] = time();
 
-    // Continue with the rest of the chat logic
     if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
         $email = mysqli_real_escape_string($conn, $_COOKIE["login"]);
         $session = $_SESSION["session"];
@@ -45,6 +37,15 @@ if (isset($_SESSION["session"])) {
             $userId = mysqli_real_escape_string($conn, $_GET["userid"]);
             $rs = mysqli_query($conn, "SELECT * FROM user WHERE userId='$userId'");
             if ($r = mysqli_fetch_array($rs)) {
+                
+                // Update messages to 'read' when chat is opened
+                $updateMessages = "UPDATE message SET is_read = 1, read_status = 1 WHERE sender_userid = '$userId' AND receiver_userid = '$from_userid' AND is_read = 0";
+                mysqli_query($conn, $updateMessages);
+
+                // Reset unread message count in notifications
+                $resetNotification = "UPDATE notifications SET unread_messages = 0 WHERE sender_userid = '$userId' AND receiver_userid = '$from_userid'";
+                mysqli_query($conn, $resetNotification);
+
                 ?>
                 <!DOCTYPE html>
                 <html lang="en">
@@ -106,8 +107,8 @@ if (isset($_SESSION["session"])) {
                             }
                             .user-info img {
                                 border-radius: 50%;
-                                width: 90px;
-                                height: 90px;
+                                width: 80px;
+                                height: 80px;
                                 object-fit: cover;
                             }
                             .status-indicator {
@@ -183,7 +184,7 @@ if (isset($_SESSION["session"])) {
                         </style>
                     </head>
                     <body>
-                        <div class="background-image">
+                    <div class="background-image">
                             <img src="image/logo.png" id="image-background">
                         </div>
                         <div class="container-fluid">
@@ -209,12 +210,11 @@ if (isset($_SESSION["session"])) {
                                         <hr>
                                         <div class="chat-box" id="chat-box"></div>
                                         <div class="message-input">
-                                    <input type="text" id="message" placeholder="Type a message here..." autocomplete="off">
-                                    <button class="send-btn">
-                                        <i class="fa-brands fa-telegram"></i>
-                                    </button>
-                                    <div id="flash-message" style="display: none; color: red; font-size: 12px; margin-top: 5px;">Please enter a message</div>
-                                </div>
+                                            <input type="text" id="message" placeholder="Type a message here..." autocomplete="off">
+                                            <button class="send-btn">
+                                                <i class="fa-brands fa-telegram"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="overlay"></div>
                                 </div>
@@ -275,34 +275,6 @@ if (isset($_SESSION["session"])) {
                                 location.reload();
                             }, 300000);
                         </script>
-                        <script>
-                            const messageInput = document.getElementById("message");
-                            const sendBtn = document.querySelector(".send-btn");
-                            const flashMessage = document.getElementById("flash-message");
-
-                            function sendMessage() {
-                                const messageText = messageInput.value.trim();
-                                if (messageText === "") {
-                                    flashMessage.style.display = "block";
-                                    setTimeout(() => {
-                                        flashMessage.style.display = "none";
-                                    }, 1500); // Flash message for 1.5 seconds
-                                    return false; // Prevent sending if message is empty
-                                }
-                                // Code to send the message goes here
-                                console.log("Message sent:", messageText);
-                                messageInput.value = ""; // Clear input after sending
-                            }
-
-                            sendBtn.addEventListener("click", sendMessage);
-
-                            messageInput.addEventListener("keydown", function (event) {
-                                if (event.key === "Enter") {
-                                    event.preventDefault();
-                                    sendMessage();
-                                }
-                            });
-                        </script>
                     </body>
                 </html>
                 <?php
@@ -318,7 +290,6 @@ if (isset($_SESSION["session"])) {
         echo "You are not logged in.";
     }
 } else {
-    // User is not logged in, redirect to login page
     header("location: index.php");
     exit();
 }

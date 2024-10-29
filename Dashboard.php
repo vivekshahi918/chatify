@@ -11,9 +11,7 @@ $session_timeout = 15 * 60; // 15 minutes
 
 // Check if user is logged in
 if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
-    // Check if the session has timed out
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $session_timeout)) {
-        // Session has timed out
         $userId = $_SESSION["session"];
 
         // Update logout_time in the database
@@ -31,7 +29,7 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     }
 
     // Update last activity timestamp
-    $_SESSION['last_activity'] = time(); // Update last activity time
+    $_SESSION['last_activity'] = time();
 
     $email = $_COOKIE["login"];
     $session = $_SESSION["session"];
@@ -39,12 +37,18 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     // Fetch logged-in user info
     $rs = mysqli_query($conn, "SELECT * FROM user WHERE email = '$email'");
     if ($rs && mysqli_num_rows($rs) > 0) {
-        $r = mysqli_fetch_assoc($rs); // Assign logged-in user data to $r
+        $r = mysqli_fetch_assoc($rs);
+        $userId = $r["userId"];
     } else {
         echo "User data not found.";
-        header("location: login.php"); // Redirect if no user data is found
+        header("location: login.php");
         exit();
     }
+
+    // Fetch total unread notifications for logged-in user
+    $notificationQuery = "SELECT SUM(unread_messages) AS total_unread FROM notifications WHERE receiver_userid = '$userId'";
+    $notificationResult = mysqli_query($conn, $notificationQuery);
+    $totalUnreadNotifications = ($notificationResult && mysqli_num_rows($notificationResult) > 0) ? mysqli_fetch_assoc($notificationResult)['total_unread']+ 0 : 0;
 } else {
     header("location: login.php");
     exit();
@@ -53,6 +57,8 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
 
 <?php include_once "header.php"; ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- Styles and Scripts from your existing code -->
 <style>
     body {
         background-color: #f0f8ff; /* Light Alice Blue */
@@ -185,6 +191,8 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
         color: #333;
     }
 </style>
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -202,21 +210,29 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
             }
         });
 
-        $(document).on("click", ".chat-link", function() {
-            window.location.href = $(this).data("href");
-        });
-    });
+        // Refresh unread notifications count every 30 seconds
+        setInterval(function() {
+            $.ajax({
+                url: "get_notifications.php", // Create a file that returns total unread count
+                type: "POST",
+                data: { receiver_userid: "<?php echo $userId; ?>" },
+                success: function(data) {
+                    $(".notification-badge").text(data); // Update the notification count badge
+                }
+            });
+        }, 30000);
 
-    setInterval(function() {
-        location.reload();
-    }, 30000);
+        setInterval(function() {
+                                location.reload();
+                            }, 10000);
+    });
+    
 </script>
 
 <body>
 <div class="background-image">
-    <img src="image/logo.png" id="image-background">
-</div>
-
+                            <img src="image/logo.png" id="image-background">
+                        </div>
 <div class="container-fluid">
 <div class="row justify-content-center" style="margin-top: 90px;">
     <div class="col-12 col-md-8 col-lg-6">
@@ -242,9 +258,10 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                                 </button>
                             </td>
                             <td>
+                                <!-- Notification icon with dynamic unread count -->
                                 <div class="notification-icon">
                                     <i class="fas fa-bell"></i>
-                                    <span class="notification-badge">3</span> <!-- Display number of notifications -->
+                                    <span class="notification-badge"><?php echo $totalUnreadNotifications; ?></span>
                                 </div>
                             </td>
                         </tr>
@@ -257,26 +274,27 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                 </div>
                 <div class="row" id="record">
                     <?php
-                    // Fetch other users' info with their unread messages
+                    // Fetch other users' info along with unread messages count
                     $rp = mysqli_query($conn, "SELECT u.*, COALESCE(n.unread_messages, 0) AS unread_messages 
-                                                        FROM user u
-                                                        LEFT JOIN notifications n ON u.userId = n.userId
-                                                        WHERE u.email <> '$email'
-                                                        ORDER BY u.status DESC, u.first_name ASC");
+                                FROM user u
+                                LEFT JOIN notifications n ON u.userId = n.sender_userid AND n.receiver_userid = '$userId'
+                                WHERE u.email <> '$email'
+                                ORDER BY u.status DESC, u.first_name ASC");
 
                     echo "<table class='table table-borderless'>";
-                    while ($rn = mysqli_fetch_array($rp)) { // $rn now refers to each other user
+                    while ($rn = mysqli_fetch_array($rp)) {
                         ?>
                         <tr>
-                            <td>
-                                <a href="#" class="chat-link" data-href="chat.php?userid=<?php echo $rn["userId"]; ?>">
-                                    <img src="images/<?php echo $rn["userId"]; ?>.jpg" class="rounded-circle" style="width:60px;height:60px;">
-                                    <span><?php echo $rn["first_name"] . " " . $rn["last_name"]; ?></span>
-                                    <?php if ($rn['unread_messages'] > 0): ?>
-                                        <span class="badge bg-primary"><?php echo $rn['unread_messages']; ?> New</span>
-                                    <?php endif; ?>
-                                </a>
-                            </td>
+                        <td>
+                            <a href="chat.php?userid=<?php echo $rn["userId"]; ?>" class="chat-link">
+                                <img src="images/<?php echo $rn["userId"]; ?>.jpg" class="rounded-circle" style="width:60px;height:60px;">
+                                <span><?php echo $rn["first_name"] . " " . $rn["last_name"]; ?></span>
+                                <?php if ($rn['unread_messages'] > 0): ?>
+                                    <span class="badge bg-primary"><?php echo $rn['unread_messages']; ?> New</span>
+                                <?php endif; ?>
+                            </a>
+                        </td>
+
                             <td>
                                 <?php if ($rn["last_activity"] !== $rn["logout_time"]): ?>
                                     <span style="color: green;">● Active</span>
@@ -285,9 +303,10 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
                                 <?php endif; ?>
                             </td>
                             <td>
+                                <!-- Individual notification icon for each user -->
                                 <div class="notification-icon">
                                     <i class="fas fa-bell"></i>
-                                    <span class="notification-badge">3</span> <!-- Display number of notifications -->
+                                    <span class="notification-badge"><?php echo $rn['unread_messages']; ?></span>
                                 </div>
                             </td>
                         </tr>
