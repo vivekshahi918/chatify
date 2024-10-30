@@ -92,6 +92,18 @@ if (isset($_SESSION["session"])) {
                             transition: opacity 0.5s ease;
                             z-index: -1;
                         }
+                        
+                        .single-tick::after {
+                            content: '✔';
+                            color: gray;
+                            margin-left: 5px;
+                        }
+
+                        .blue-tick::after {
+                            content: '✔✔'; 
+                            color: blue; 
+                            margin-left: 5px;
+                        }
 
                         .card {
                             width: 100%;

@@ -13,7 +13,6 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
     $session = mysqli_real_escape_string($conn, $_POST["session"]);
     $lastMessageId = isset($_POST["lastMessageId"]) ? mysqli_real_escape_string($conn, $_POST["lastMessageId"]) : 0;
 
-
     $query = "SELECT * FROM message 
               WHERE ((sender_userid = ? AND receiver_userid = ?) 
               OR (sender_userid = ? AND receiver_userid = ?))
@@ -27,27 +26,29 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
 
     if (mysqli_num_rows($result) > 0) {
         while ($row = mysqli_fetch_assoc($result)) {
-
             $chat_class = ($row['sender_userid'] == $senderid) ? "outgoing" : "incoming";
 
+            // Determine the tick class based on read status
+            $tickClass = $row['read_status'] == 1 ? 'blue-tick' : 'single-tick';
+
             if (!empty($row['file_path'])) {
-
                 $fileExt = pathinfo($row['file_path'], PATHINFO_EXTENSION);
-
 
                 if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif'])) {
                     echo '<div class="chat-message ' . $chat_class . '">
                             <img src="uploads/' . htmlspecialchars($row['file_path']) . '" alt="File" style="max-width: 200px;">
+                            <span class="tick ' . $tickClass . '"></span>
                           </div>';
                 } elseif (in_array($fileExt, ['mp4', 'mov', 'avi'])) {
                     echo '<div class="chat-message ' . $chat_class . '">
                             <video src="uploads/' . htmlspecialchars($row['file_path']) . '" controls style="max-width: 200px;"></video>
+                            <span class="tick ' . $tickClass . '"></span>
                           </div>';
                 }
             } else {
-
                 echo '<div class="chat-message ' . $chat_class . '">
                         <p>' . htmlspecialchars($row['message']) . '</p>
+                        <span class="tick ' . $tickClass . '"></span>
                       </div>';
             }
         }
