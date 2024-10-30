@@ -11,7 +11,6 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     if (isset($_REQUEST["ch"])) {
         $ch = mysqli_real_escape_string($conn, $_REQUEST["ch"]);
 
-        // Improved query to include the status of users
         $query = "SELECT *, (CASE WHEN last_activity <> logout_time THEN 1 ELSE 0 END) AS status 
                   FROM user 
                   WHERE (first_name LIKE '%$ch%' OR last_name LIKE '%$ch%') 
@@ -44,4 +43,3 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
 } else {
     header("location:login.php");
 }
-?>

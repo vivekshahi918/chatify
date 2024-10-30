@@ -10,12 +10,12 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     $sender_email = strtolower(mysqli_real_escape_string($conn, $_COOKIE["login"]));
 
     if (isset($_POST["msg"]) && isset($_POST["userid"])) {
-        // Handle text message
+
         $msg = validation($_POST["msg"]);
         $receiver_userid = mysqli_real_escape_string($conn, $_POST["userid"]);
         handleTextMessage($conn, $sender_email, $receiver_userid, $msg);
     } elseif (isset($_FILES["file"]) && isset($_POST["receiverid"])) {
-        // Handle file upload
+
         handleFileUpload($conn, $sender_email, $_FILES["file"], $_POST["receiverid"]);
     } else {
         echo "Required parameters are missing.";
@@ -26,13 +26,15 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     header("location:login.php");
 }
 
-function validation($data) {
+function validation($data)
+{
     $data = trim($data);
     $data = htmlspecialchars($data);
     return $data;
 }
 
-function handleTextMessage($conn, $sender_email, $receiver_userid, $msg) {
+function handleTextMessage($conn, $sender_email, $receiver_userid, $msg)
+{
     $sn = 0;
     $rs = mysqli_query($conn, "SELECT MAX(sn) FROM message");
     if ($r = mysqli_fetch_array($rs)) {
@@ -83,7 +85,8 @@ function handleTextMessage($conn, $sender_email, $receiver_userid, $msg) {
     mysqli_stmt_close($stmt);
 }
 
-function handleFileUpload($conn, $sender_email, $file, $receiver_userid) {
+function handleFileUpload($conn, $sender_email, $file, $receiver_userid)
+{
     $fileName = basename($file["name"]);
     $fileTmpName = $file["tmp_name"];
     $fileSize = $file["size"];
@@ -129,14 +132,12 @@ function handleFileUpload($conn, $sender_email, $file, $receiver_userid) {
 
             $dt = date("Y-m-d H:i:s");
 
-            // Insert file message with is_read and read_status set to 0
             $stmt = mysqli_prepare($conn, "INSERT INTO message (sn, userId, sender_email, sender_userid, receiver_email, receiver_userid, file_path, chat_time, is_read, read_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)");
             mysqli_stmt_bind_param($stmt, "isssssss", $sn, $new_user_id, $sender_email, $sender_userid, $receiver_email, $receiver_userid, $fileDestination, $dt);
 
             if (mysqli_stmt_execute($stmt)) {
                 echo "success";
 
-                // Update the notifications table for unread messages
                 updateNotification($conn, $sender_userid, $receiver_userid);
             } else {
                 echo "Error: " . mysqli_error($conn);
@@ -151,15 +152,29 @@ function handleFileUpload($conn, $sender_email, $file, $receiver_userid) {
     }
 }
 
-// Function to update notifications for unread messages
-function updateNotification($conn, $sender_userid, $receiver_userid) {
-    $query = "INSERT INTO notifications (sender_userid, receiver_userid, unread_messages)
-              VALUES (?, ?, 1)
-              ON DUPLICATE KEY UPDATE unread_messages = unread_messages + 1";
+function updateNotification($conn, $sender_userid, $receiver_userid)
+{
 
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ss", $sender_userid, $receiver_userid);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $checkQuery = "SELECT unread_messages FROM notifications WHERE sender_userid = ? AND receiver_userid = ?";
+    $checkStmt = mysqli_prepare($conn, $checkQuery);
+    mysqli_stmt_bind_param($checkStmt, "ss", $sender_userid, $receiver_userid);
+    mysqli_stmt_execute($checkStmt);
+    mysqli_stmt_bind_result($checkStmt, $unread_messages);
+    mysqli_stmt_fetch($checkStmt);
+    mysqli_stmt_close($checkStmt);
+
+    if ($unread_messages === null) {
+
+        $insertQuery = "INSERT INTO notifications (sender_userid, receiver_userid, unread_messages) VALUES (?, ?, 1)";
+        $insertStmt = mysqli_prepare($conn, $insertQuery);
+        mysqli_stmt_bind_param($insertStmt, "ss", $sender_userid, $receiver_userid);
+        mysqli_stmt_execute($insertStmt);
+        mysqli_stmt_close($insertStmt);
+    } else {
+        $updateQuery = "UPDATE notifications SET unread_messages = unread_messages + 1 WHERE sender_userid = ? AND receiver_userid = ?";
+        $updateStmt = mysqli_prepare($conn, $updateQuery);
+        mysqli_stmt_bind_param($updateStmt, "ss", $sender_userid, $receiver_userid);
+        mysqli_stmt_execute($updateStmt);
+        mysqli_stmt_close($updateStmt);
+    }
 }
-?>

@@ -13,13 +13,13 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
     $session = mysqli_real_escape_string($conn, $_POST["session"]);
     $lastMessageId = isset($_POST["lastMessageId"]) ? mysqli_real_escape_string($conn, $_POST["lastMessageId"]) : 0;
 
-    // Query to fetch messages based on sender and receiver IDs
+
     $query = "SELECT * FROM message 
               WHERE ((sender_userid = ? AND receiver_userid = ?) 
               OR (sender_userid = ? AND receiver_userid = ?))
               AND sn > ?
               ORDER BY sn ASC";
-    
+
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "sssss", $senderid, $receiverid, $receiverid, $senderid, $lastMessageId);
     mysqli_stmt_execute($stmt);
@@ -27,14 +27,14 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
 
     if (mysqli_num_rows($result) > 0) {
         while ($row = mysqli_fetch_assoc($result)) {
-            // Determine if the message is incoming or outgoing
+
             $chat_class = ($row['sender_userid'] == $senderid) ? "outgoing" : "incoming";
-            
+
             if (!empty($row['file_path'])) {
-                // Get file extension to determine media type
+
                 $fileExt = pathinfo($row['file_path'], PATHINFO_EXTENSION);
-                
-                // Display image or video based on file type
+
+
                 if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif'])) {
                     echo '<div class="chat-message ' . $chat_class . '">
                             <img src="uploads/' . htmlspecialchars($row['file_path']) . '" alt="File" style="max-width: 200px;">
@@ -45,7 +45,7 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
                           </div>';
                 }
             } else {
-                // Display text message
+
                 echo '<div class="chat-message ' . $chat_class . '">
                         <p>' . htmlspecialchars($row['message']) . '</p>
                       </div>';
@@ -55,10 +55,8 @@ if (isset($_POST["senderid"]) && isset($_POST["receiverid"]) && isset($_POST["em
         echo '<div class="no-messages">No messages found.</div>';
     }
 
-    // Close the statement and the database connection
     mysqli_stmt_close($stmt);
     mysqli_close($conn);
 } else {
     echo 'Required parameters are missing.';
 }
-?>

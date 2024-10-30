@@ -20,13 +20,11 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
         $fileError = $file["error"];
         $fileType = $file["type"];
 
-        // Validate file type and size
         $allowedTypes = array("image/jpeg", "image/png", "image/gif");
         if (in_array($fileType, $allowedTypes) && $fileSize < 5000000) { // 5 MB max
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             $fileDestination = 'uploads/' . uniqid('', true) . "." . $fileExtension;
             if (move_uploaded_file($fileTmpName, $fileDestination)) {
-                // Insert file information into database
                 $stmt = $conn->prepare("INSERT INTO message (sender_userid, receiver_userid, file_path) VALUES (?, ?, ?)");
                 $stmt->bind_param("iis", $fromUserId, $receiverId, $fileDestination);
                 if ($stmt->execute()) {
@@ -49,4 +47,3 @@ if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Not logged in.']);
 }
-?>
