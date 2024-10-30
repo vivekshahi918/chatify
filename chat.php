@@ -245,6 +245,7 @@ if (isset($_SESSION["session"])) {
                     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                     <script>
                         $(document).ready(function() {
+                            
                             function loadData() {
                                 var senderid = "<?php echo $from_userid; ?>";
                                 var receiverid = "<?php echo $userId; ?>";
@@ -298,12 +299,12 @@ if (isset($_SESSION["session"])) {
                             });
 
                             loadData();
-                            setInterval(loadData, 500);
+                            setInterval(loadData, 3000);
                         });
 
                         setInterval(function() {
                             location.reload();
-                        }, 300000);
+                        }, 30000);
                     </script>
                 </body>
 
