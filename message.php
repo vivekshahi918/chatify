@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+// example.php /
 if (isset($_COOKIE["login"]) && isset($_SESSION["session"])) {
     $conn = mysqli_connect("localhost", "root", "", "chat_db");
 

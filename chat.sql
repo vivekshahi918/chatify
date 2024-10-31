@@ -63,24 +63,24 @@ CREATE TABLE `notifications` (
 DELIMITER $$
 
 
-CREATE TRIGGER `user_login_trigger`
-BEFORE UPDATE ON `user`
-FOR EACH ROW
-BEGIN
-    IF NEW.login_time IS NOT NULL AND NEW.login_time <> OLD.login_time THEN
-        SET NEW.status = 1;
-    END IF;
-END$$
+-- CREATE TRIGGER `user_login_trigger`
+-- BEFORE UPDATE ON `user`
+-- FOR EACH ROW
+-- BEGIN
+--     IF NEW.login_time IS NOT NULL AND NEW.login_time <> OLD.login_time THEN
+--         SET NEW.status = 1;
+--     END IF;
+-- END$$
 
 
-CREATE TRIGGER `user_logout_trigger`
-BEFORE UPDATE ON `user`
-FOR EACH ROW
-BEGIN
-    IF NEW.logout_time IS NOT NULL AND NEW.logout_time <> OLD.logout_time THEN
-        SET NEW.status = 0;
-    END IF;
-END$$
+-- CREATE TRIGGER `user_logout_trigger`
+-- BEFORE UPDATE ON `user`
+-- FOR EACH ROW
+-- BEGIN
+--     IF NEW.logout_time IS NOT NULL AND NEW.logout_time <> OLD.logout_time THEN
+--         SET NEW.status = 0;
+--     END IF;
+-- END$$
 
 CREATE TRIGGER `update_unread_messages`
 AFTER INSERT ON `message`

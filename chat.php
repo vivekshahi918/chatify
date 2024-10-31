@@ -2,6 +2,8 @@
 session_start();
 $conn = mysqli_connect("localhost", "root", "", "chat_db");
 
+// boxarea.php 
+
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
