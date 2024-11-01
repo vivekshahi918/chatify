@@ -1,5 +1,8 @@
-## Chatify | PHP, MySQL, JavaScript, jQuery, AJAX |
+## Chatify 
 
+##Technology:- PHP, MySQL, JavaScript, jQuery, AJAX
+
+##Description
 • Built an interactive chat platform using PHP and JavaScript for instant, real-time communication.
 • Strengthened security with streamlined login and registration for an effortless user experience.
 • Enabled smooth messaging with auto-scrolling and lasting message history storage.
